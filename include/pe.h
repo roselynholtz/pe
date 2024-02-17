@@ -1,0 +1,84 @@
+#pragma once
+
+// raw library, no verbose logging.
+//#define PE_MINIMAL
+
+#include <Windows.h>
+#include <vector>
+
+#ifndef PE_MINIMAL
+#include <iostream>
+#endif
+
+namespace pe
+{
+	// sections contained within a pe file.
+	class file_section
+	{
+	public:
+
+	};
+
+	// basic PE file.
+	class file
+	{
+		// raw image data.
+		std::vector< uint8_t > m_image_data;
+
+		// address of the first byte of our image in memory.
+		uintptr_t m_image_address = 0x0;
+	public:
+		file( const std::vector< uint8_t >& image_data )
+		{
+			m_image_data = image_data;
+
+			// set our address in memory.
+			m_image_address = reinterpret_cast< uintptr_t >( m_image_data.data( ) );
+		}
+
+		// sets the 'm_image_data' member.
+		void set_image_data( const std::vector< uint8_t >& image_data )
+		{
+			m_image_data = image_data;
+		}
+
+		// returns a read only version of the 'm_image_data' member.
+		const std::vector< uint8_t >& get_image_data( ) const
+		{
+			return m_image_data;
+		}
+
+		// clears all data about this file from memory.
+		void scrub( )
+		{
+			// clear image data first.
+			m_image_data.clear( );
+
+			// reset our image address.
+			m_image_address = 0x0;
+		}
+
+		// true if 'm_image_data' is not empty.
+		bool good( )
+		{
+			return !m_image_data.empty( );
+		}
+
+	#ifndef PE_MINIMAL
+		// spews all debug data about the file.
+		void spew( )
+		{
+			std::cout << "----------------------------------" << std::endl;
+			std::cout << "|            pe file             |" << std::endl;
+			std::cout << "----------------------------------" << std::endl << std::endl;
+
+			// we don't have a valid file.
+			if ( !good( ) )
+			{
+				std::cout << "no valid file loaded" << std::endl;
+				return;
+			}
+		}
+	#endif
+	};
+}
