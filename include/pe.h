@@ -27,6 +27,16 @@ namespace pe
 
 		// address of the first byte of our image in memory.
 		uintptr_t m_image_address = 0x0;
+
+		// dos header.
+		IMAGE_DOS_HEADER* m_dos_header;
+
+		// retrieves all header pointers.
+		void populate_headers( )
+		{
+			// dos header starts at the first byte and spans 64 bytes.
+			m_dos_header = reinterpret_cast< IMAGE_DOS_HEADER* >( m_image_address );
+		}
 	public:
 		file( const std::vector< uint8_t >& image_data )
 		{
@@ -34,6 +44,9 @@ namespace pe
 
 			// set our address in memory.
 			m_image_address = reinterpret_cast< uintptr_t >( m_image_data.data( ) );
+
+			// populate our headers.
+			populate_headers( );
 		}
 
 		// sets the 'm_image_data' member.
@@ -78,6 +91,9 @@ namespace pe
 				std::cout << "no valid file loaded" << std::endl;
 				return;
 			}
+
+			// headers.
+			// we skip dos header here since it is not useful.
 		}
 	#endif
 	};
