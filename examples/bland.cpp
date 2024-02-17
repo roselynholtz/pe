@@ -5,13 +5,6 @@
 
 int main( int argc, char* argv[ ] )
 {
-	// user didn't provide a valid file.
-	if ( argc != 2 )
-	{
-		std::cout << "usage: " << argv[ 0 ] << " <file_path>" << std::endl;
-		return 1;
-	}
-
 	// contains our raw file data.
 	std::vector< uint8_t > image_data;
 
@@ -30,6 +23,9 @@ int main( int argc, char* argv[ ] )
 
 	// retrieve the size of the file.
 	size_t file_size = file.tellg( );
+
+	// seek to the beginning of the file.
+	file.seekg( 0, std::ios::beg );
 
 	// resize our vector to our file size.
 	image_data.resize( file_size );
@@ -52,6 +48,8 @@ int main( int argc, char* argv[ ] )
 
 	// spew debug information about this file.
 	pe_file.spew( );
+
+	// clearing data from memory about your file is as simple as this:
 
 	// clear our image data.
 	image_data.clear( );
