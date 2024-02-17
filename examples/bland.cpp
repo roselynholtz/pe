@@ -8,7 +8,7 @@ int main( int argc, char* argv[ ] )
 	// user didn't provide a valid file.
 	if ( argc != 2 )
 	{
-		std::cerr << "usage: " << argv[ 0 ] << " <file_path>" << std::endl;
+		std::cout << "usage: " << argv[ 0 ] << " <file_path>" << std::endl;
 		return 1;
 	}
 
@@ -16,7 +16,7 @@ int main( int argc, char* argv[ ] )
 	std::vector< uint8_t > image_data;
 
 	// open the file on disk.
-	std::ifstream file( argv[ 1 ] );
+	std::ifstream file( std::string( argv[ 1 ] ), std::ios::binary );
 
 	// something went while opening this file (invalid permissions maybe?)
 	if ( !file.is_open( ) )
