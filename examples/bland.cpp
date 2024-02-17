@@ -22,7 +22,7 @@ int main( int argc, char* argv[ ] )
 	if ( !file.is_open( ) )
 	{
 		std::cout << "failed to open file" << std::endl;
-		return 1;
+		return 2;
 	}
 
 	// seek to the end of the file.
@@ -47,7 +47,7 @@ int main( int argc, char* argv[ ] )
 	if ( !pe_file.good( ) )
 	{
 		std::cout << "pe::file initialization failed" << std::endl;
-		return 2;
+		return 3;
 	}
 
 	// spew debug information about this file.
