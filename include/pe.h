@@ -1,12 +1,12 @@
 #pragma once
 
-// raw library, no verbose logging.
-//#define PE_MINIMAL
+// verbose logging.
+//#define PE_VERBOSE
 
 #include <Windows.h>
 #include <vector>
 
-#ifndef PE_MINIMAL
+#ifdef PE_VERBOSE
 #include <iostream>
 #endif
 
@@ -64,7 +64,7 @@ namespace pe
 			return !m_image_data.empty( );
 		}
 
-	#ifndef PE_MINIMAL
+	#ifdef PE_VERBOSE
 		// spews all debug data about the file.
 		void spew( )
 		{
