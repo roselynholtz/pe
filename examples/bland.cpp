@@ -4,7 +4,14 @@
 #include <iostream>
 
 int main( int argc, char* argv[ ] )
-{
+{	
+	// user didn't provide a valid file.
+	if ( argc != 2 )
+	{
+		std::cout << "usage: " << argv[ 0 ] << " <file_path>" << std::endl;
+		return 1;
+	}
+
 	// contains our raw file data.
 	std::vector< uint8_t > image_data;
 
