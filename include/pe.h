@@ -1,26 +1,12 @@
 #pragma once
 
-// verbose logging.
-//#define PE_VERBOSE
-
 #include <Windows.h>
 #include <vector>
 
-#ifdef PE_VERBOSE
-#include <iostream>
-#endif
-
 namespace pe
 {
-	// sections contained within a pe file.
-	class file_section
-	{
-	public:
-
-	};
-
-	// basic PE file.
-	class file
+	// basic PE image.
+	class image
 	{
 		// raw image data.
 		std::vector< uint8_t > m_image_data;
@@ -31,11 +17,11 @@ namespace pe
 		// dos header.
 		IMAGE_DOS_HEADER* m_dos_header;
 
-		// nt headers.
-		IMAGE_NT_HEADERS* m_nt_headers;
+		// file header.
+		IMAGE_FILE_HEADER* m_file_header;
 
-		// are we a pe file?
-		bool m_pe;
+		// optional header.
+		IMAGE_OPTIONAL_HEADER* m_optional_header;
 
 		// retrieves all header pointers.
 		void populate_headers( )
@@ -43,27 +29,22 @@ namespace pe
 			// dos header starts at the first byte and spans 64 bytes.
 			m_dos_header = reinterpret_cast< IMAGE_DOS_HEADER* >( m_image_address );
 
-			// pe files are identified by the ascii string
-			// "MZ" or in hex: 4D5A
-			// byte order is flipped (little-endian)
-			// so "MZ" becomes "ZM" (5A4D).
-			m_pe = m_dos_header->e_magic == 0x5A4D;
+			// IMAGE_DOS_HEADER::e_lfanew contains the offset of nt headers from our image base.
+			IMAGE_NT_HEADERS* nt_headers = reinterpret_cast< IMAGE_NT_HEADERS* >( m_image_address + m_dos_header->e_lfanew );
 
-			// we aren't a pe file, don't bother.
-			if ( !m_pe )
+			// invalid nt headers, don't bother.
+			if ( !nt_headers )
 				return;
 
-			// IMAGE_DOS_HEADER::e_lfanew contains the offset of nt headers from our image base.
-			m_nt_headers = reinterpret_cast< IMAGE_NT_HEADERS* >( m_image_address + m_dos_header->e_lfanew );
+			// file header.
+			m_file_header = &nt_headers->FileHeader;
+
+			// optional header.
+			m_optional_header = &nt_headers->OptionalHeader;
 		}
 	public:
-		file( const std::vector< uint8_t >& image_data )
+		image( const std::vector< uint8_t >& image_data ) : m_image_data( image_data ), m_image_address( reinterpret_cast< uintptr_t >( m_image_data.data( ) ) )
 		{
-			m_image_data = image_data;
-
-			// set our address in memory.
-			m_image_address = reinterpret_cast< uintptr_t >( m_image_data.data( ) );
-
 			// populate our headers.
 			populate_headers( );
 
@@ -72,20 +53,8 @@ namespace pe
 				return;
 		}
 
-		// sets the 'm_image_data' member.
-		void set_image_data( const std::vector< uint8_t >& image_data )
-		{
-			m_image_data = image_data;
-		}
-
-		// returns a read only version of the 'm_image_data' member.
-		const std::vector< uint8_t >& get_image_data( ) const
-		{
-			return m_image_data;
-		}
-
 		// clears all data about this file from memory.
-		void scrub( )
+		void clear( )
 		{
 			// clear image data first.
 			m_image_data.clear( );
@@ -94,57 +63,45 @@ namespace pe
 			m_image_address = 0x0;
 		}
 
-		// true if the file seems to have no issues.
-		// this is not extensive, compare and check data yourself.
-		bool good( )
+		// true if the image seems to have no issues.
+		// this is not extensive.
+		bool good( ) const
 		{
 			// bad image data.
 			if ( m_image_data.empty( ) )
 				return false;
 
 			// not in pe format.
-			if ( !m_pe )
+			// pe files are identified by the ascii string
+			// "MZ" or in hex: 4D5A
+			// byte order is flipped (little-endian)
+			// so "MZ" becomes "ZM" (5A4D).
+			if ( m_dos_header->e_magic != 0x5A4D )
 				return false;
 
-			// invalid nt headers.
-			if ( !m_nt_headers )
+			// invalid headers.
+			if ( !m_file_header || !m_optional_header )
 				return false;
 
 			return true;
 		}
 
-		// dos header for this file.
+		// dos header for this image.
 		const IMAGE_DOS_HEADER* dos_header( ) const
 		{
 			return m_dos_header;
 		}
 
-		// nt headers for this image.
-		const IMAGE_NT_HEADERS* nt_headers( ) const
+		// file header for this image.
+		const IMAGE_FILE_HEADER* file_header( ) const
 		{
-			return m_nt_headers;
+			return m_file_header;
 		}
-	#ifdef PE_VERBOSE
-		// spews all debug data about the file.
-		void spew( )
+
+		// optional header for this image.
+		const IMAGE_OPTIONAL_HEADER* optional_header( ) const
 		{
-			std::cout << "----------------------------------" << std::endl;
-			std::cout << "|            pe file             |" << std::endl;
-			std::cout << "----------------------------------" << std::endl;
-
-			// we don't have a valid file.
-			if ( !good( ) )
-			{
-				std::cout << "no valid file loaded" << std::endl;
-				return;
-			}
-
-			std::cout << "note: most, if not all addresses stored here are relative to the base of the image" << std::endl << std::endl;
-
-			// headers.
-			// we skip dos header here since it is not useful.
-			std::cout << "nt headers: 0x" << std::hex << reinterpret_cast< uintptr_t >( m_nt_headers ) - m_image_address << std::endl;
+			return m_optional_header;
 		}
-	#endif
 	};
 }
